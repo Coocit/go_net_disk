@@ -1,6 +1,9 @@
 package meta
 
-import "sort"
+import (
+	"go_net_disk/dao"
+	"sort"
+)
 
 // FileMeta 文件元信息结构
 type FileMeta struct {
@@ -22,8 +25,28 @@ func UpdateFileMeta(fileMeta FileMeta) {
 	fileMeats[fileMeta.FileSha1] = fileMeta
 }
 
+// UpdateFileMetaDB 新增更新文件元信息到数据库中
+func UpdateFileMetaDB(fmeta FileMeta) bool {
+	return dao.OnFileUploadFinished(fmeta.FileSha1, fmeta.FileName, fmeta.FileSize, fmeta.Location)
+}
+
 func GetFileMeta(fileSha1 string) FileMeta {
 	return fileMeats[fileSha1]
+}
+
+// GetFileMetaDB 从MySQL获取元信息
+func GetFileMetaDB(fileSha1 string) (FileMeta, error) {
+	tfile, err := dao.GetFileMeta(fileSha1)
+	if err != nil {
+		return FileMeta{}, err
+	}
+	fmeta := FileMeta{
+		FileSha1: tfile.FileHash,
+		FileName: tfile.FileName.String,
+		FileSize: tfile.FileSize.Int64,
+		Location: tfile.FileAddr.String,
+	}
+	return fmeta, nil
 }
 
 // GetLastFileMetas 获取批量的文件元信息列表
